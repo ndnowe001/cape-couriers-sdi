@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css"><link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <style>
+        #map {
+            width: 829px;
+            height: 566px;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script><script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="data/parcels_with_location_1.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:true, maxZoom:18, minZoom:5
+        })
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>');
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+        }
+        var layer_OpenStreetMap_0 = L.tileLayer('http://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            opacity: 1.0,
+            attribution: '',
+        });
+        layer_OpenStreetMap_0;
+        map.addLayer(layer_OpenStreetMap_0);
+        function pop_parcels_with_location_1(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">track_num</th>\
+                        <td colspan="2">' + (feature.properties['track_num'] !== null ? Autolinker.link(String(feature.properties['track_num'])) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">parcel_type</th>\
+                        <td>' + (feature.properties['parcel_type'] !== null ? Autolinker.link(String(feature.properties['parcel_type'])) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">parcel_weight_kg</th>\
+                        <td>' + (feature.properties['parcel_weight_kg'] !== null ? Autolinker.link(String(feature.properties['parcel_weight_kg'])) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">package_status</th>\
+                        <td>' + (feature.properties['package_status'] !== null ? Autolinker.link(String(feature.properties['package_status'])) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">pickup_date</th>\
+                        <td>' + (feature.properties['pickup_date'] !== null ? Autolinker.link(String(feature.properties['pickup_date'])) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">delivery_date</th>\
+                        <td>' + (feature.properties['delivery_date'] !== null ? Autolinker.link(String(feature.properties['delivery_date'])) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+        function style_parcels_with_location_1_0() {
+            return {
+                pane: 'pane_parcels_with_location_1',
+                rotationAngle: 0.0,
+                rotationOrigin: 'center center',
+                icon: L.icon({
+                    iconUrl: 'markers/shopping_gift.svg',
+                    iconSize: [22.040000000000013, 22.040000000000013]
+                }),
+            }
+        }
+        map.createPane('pane_parcels_with_location_1');
+        map.getPane('pane_parcels_with_location_1').style.zIndex = 401;
+        map.getPane('pane_parcels_with_location_1').style['mix-blend-mode'] = 'normal';
+        var layer_parcels_with_location_1 = new L.geoJson(json_parcels_with_location_1, {
+            attribution: '',
+            pane: 'pane_parcels_with_location_1',
+            onEachFeature: pop_parcels_with_location_1,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_parcels_with_location_1_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_parcels_with_location_1);
+        
+        // Create a layer group to store visible markers temporarily
+        var visibleMarkers = L.featureGroup().addTo(map);
+        
+        // Initially hide all markers
+        layer_parcels_with_location_1.eachLayer(function(layer) {
+            layer.options.opacity = 0;
+            layer.options.interactive = false;
+        });
+        
+        // We still add the layer to the map for search functionality, but markers are invisible
+        map.addLayer(layer_parcels_with_location_1);
+        setBounds();
+        
+        var searchControl = new L.Control.Search({
+            layer: layer_parcels_with_location_1,
+            initial: true,  // Changed to true to keep it expanded initially
+            collapsed: false,  // Added to keep it always expanded
+            hideMarkerOnCollapse: true,
+            autoCollapse: false,
+            autoType: false,
+            minLength: 7,
+            propertyName: 'track_num',
+            textPlaceholder: 'Enter track number...',
+            search: function(text, records) {
+                // This custom search function overrides the default suggestions behavior
+                return false; // Return false to prevent suggestions from appearing
+            },
+            moveToLocation: function(latlng, title, map) {
+                map.setView(latlng, 15);
+            },
+            filterData: function(text, records) {
+                // Clear previously visible markers when search text changes
+                visibleMarkers.clearLayers();
+                // Hide loading icon immediately
+                document.querySelector('.search-button').classList.remove('loading');
+                return records;
+            },
+            buildTip: function(text, val) {
+                return ''; // Return empty string to prevent suggestions from being built
+            }
+        });
+        
+        // Add search:locationfound event handler to show marker when Enter is pressed
+        searchControl.on('search:locationfound', function(e) {
+            // Clear existing markers
+            visibleMarkers.clearLayers();
+            
+            // Create a marker at the found location
+            var marker = L.marker(e.latlng, style_parcels_with_location_1_0(e.layer.feature));
+            marker.bindPopup(e.layer._popup._content);
+            visibleMarkers.addLayer(marker);
+            
+            // Hide loading icon
+            document.querySelector('.search-button').classList.remove('loading');
+        });
+        
+        searchControl.on('search:collapsed', function() {
+            // Clear all markers when search is cleared
+            visibleMarkers.clearLayers();
+            // Hide loading icon
+            document.querySelector('.search-button').classList.remove('loading');
+        });
+        
+        // Add additional event listener to handle the loading icon
+        searchControl.on('search:loadingend', function() {
+            // Hide loading icon when search loading ends
+            document.querySelector('.search-button').classList.remove('loading');
+        });
+        
+        // Custom CSS to hide the default loading animation
+        var style = document.createElement('style');
+        style.textContent = '.leaflet-control-search.search-load .search-button:after { display: none !important; }';
+        document.head.appendChild(style);
+        
+        map.addControl(searchControl);
+        document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
+        </script>
+    </body>
+</html>
